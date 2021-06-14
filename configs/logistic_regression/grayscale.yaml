@@ -1,6 +1,6 @@
 model:
   name: "LogisticRegression"
-  dim: 3072
+  dim: 1024
   num_classes: 10
 
 dataset:
@@ -23,4 +23,4 @@ trainer:
 
 stats:
   stats_dir: "stats"
-  stats_folder: "logisitc_regression/lr0.01-bs64/"
+  stats_folder: "logisitc_regression/grayscale/"

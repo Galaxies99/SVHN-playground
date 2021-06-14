@@ -17,8 +17,7 @@ class LogisticRegression(nn.Module):
         return torch.sigmoid(torch.matmul(x, self.beta.view(-1, 1)).view(-1))
     
     def loss(self, pred, gt):
-        return (-torch.dot(pred, gt) + torch.log(1.0 + torch.exp(pred))).mean()
-
+        return (- pred * gt + torch.log(1.0 + torch.exp(pred))).mean()
 
 class CategoricalLogisticRegression(Binary2Categorical):
     def __init__(self, **kwargs):

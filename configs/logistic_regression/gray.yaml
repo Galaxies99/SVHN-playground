@@ -1,6 +1,6 @@
 model:
   name: "LogisticRegression"
-  dim: 8100
+  dim: 1024
   num_classes: 10
 
 dataset:
@@ -8,8 +8,9 @@ dataset:
   batch_size: 64
   shuffle: True
   num_workers: 4
+  drop_last: False
   gray_scale: True
-  hog_feature: True
+  hog_feature: False
 
 optimizer:
   type: "AdamW"
@@ -17,10 +18,9 @@ optimizer:
     lr: 0.01
 
 trainer:
-  max_epoch: 200
-  multigpu: False
+  max_epoch: 50
   extra: False
 
 stats:
   stats_dir: "stats"
-  stats_folder: "logisitc_regression/lr0.01-bs64/"
+  stats_folder: "logisitc_regression/grayscale/"

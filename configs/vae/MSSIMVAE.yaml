@@ -1,0 +1,38 @@
+model:
+  name: "MSSIMVAE"
+  image_size: 32
+  in_channels: 3
+  latent_dim: 128
+  hidden_dim: [32, 64, 128, 256, 512]
+  window_size: 11
+  size_average: True
+
+dataset:
+  path: "data"
+  batch_size: 64
+  shuffle: True
+  num_workers: 4
+  drop_last: False
+  gray_scale: False
+  hog_feature: False
+
+optimizer:
+  type: "AdamW"
+  params:
+    lr: 0.005
+
+lr_scheduler:
+  type: 'ExponentialLR'
+  params:
+    gamma: 0.95
+
+trainer:
+  max_epoch: 50
+  extra: True
+
+inferencer:
+  sample_num: 64
+
+stats:
+  stats_dir: "stats"
+  stats_folder: "VAE/MSSIMVAE/"

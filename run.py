@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cfg', '-c', default = os.path.join('configs', 'default.yaml'), help = 'Config File', type = str)
+parser.add_argument('--cfg', '-c', default = os.path.join('configs', 'VAE', 'default.yaml'), help = 'Config File', type = str)
 FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
 
@@ -30,17 +30,8 @@ stats_params = cfg_dict.get('stats', {})
 
 logger.info('Building models ...')
 model = model_builder(model_params)
-
-multigpu = trainer_params.get('multigpu', False)
-if multigpu:
-    logger.info('Initialize multi-gpu training ...')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    if device == torch.device('cpu'):
-        raise EnvironmentError('No GPUs, cannot initialize multigpu training.')
-    model.to(device)
-else:
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+model.to(device)
 
 logger.info('Building dataloaders ...')
 train_dataloader = dataloader_builder(dataset_params, split = 'train')
@@ -62,9 +53,6 @@ if os.path.isfile(checkpoint_file):
     model.load_state_dict(checkpoint['model_state_dict'])
     start_epoch = checkpoint['epoch']
     logger.info("Checkpoint {} (epoch {}) loaded.".format(checkpoint_file, start_epoch))
-
-if multigpu:
-    model = torch.nn.DataParallel(model)
 
 
 def train_one_epoch(epoch, extra = False):
@@ -136,16 +124,10 @@ def train(start_epoch):
         _, acc = test_one_epoch(epoch)
         if acc > max_acc:
             max_acc = acc
-            if multigpu is False:
-                save_dict = {
-                    'epoch': epoch + 1,
-                    'model_state_dict': model.state_dict(),
-                }
-            else:
-                save_dict = {
-                    'epoch': epoch + 1,
-                    'model_state_dict': model.module.state_dict()
-                }
+            save_dict = {
+                 'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+            }
             torch.save(save_dict, os.path.join(stats_dir, 'checkpoint.tar'))
 
 

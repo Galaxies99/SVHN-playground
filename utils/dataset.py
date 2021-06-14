@@ -44,3 +44,7 @@ class SVHN_Dataset(Dataset):
 
 def get_dataset(data_root = 'data', split = 'train', gray_scale = False, hog_feature = False):
     return SVHN_Dataset(data_root, split, gray_scale = gray_scale, hog_feature = hog_feature)
+
+
+def get_dataset_size(data_root = 'data', split = 'train'):
+    return len(get_dataset(data_root, split))

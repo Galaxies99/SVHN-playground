@@ -13,7 +13,12 @@ def dataloader_builder(dataset_params, split = 'train'):
     from torch.utils.data import DataLoader
     if split not in ['train', 'test', 'extra']:
         raise NotImplementedError('Invalid split name.')
-    dataset = get_dataset(dataset_params.get('path', 'data'), split = split)
+    dataset = get_dataset(
+        dataset_params.get('path', 'data'), 
+        split = split, 
+        gray_scale = dataset_params.get('gray_scale', False),
+        hog_feature = dataset_params.get('hog_feature', False)
+    )
     return DataLoader(
         dataset,
         batch_size = dataset_params.get('batch_size', 64),

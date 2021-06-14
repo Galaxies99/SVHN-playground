@@ -13,7 +13,10 @@ class LogisticRegression(nn.Module):
         self.beta = nn.Parameter(torch.FloatTensor(dim))
     
     def forward(self, x):
-        x = rearrange(x, 'b c h w -> b (c h w)')
+        if x.dim == 3:
+            x = rearrange(x, 'b h w -> b (h w)')
+        elif x.dim == 4:
+            x = rearrange(x, 'b c h w -> b (c h w)')
         return torch.sigmoid(torch.matmul(x, self.beta.view(-1, 1)).view(-1))
     
     def loss(self, pred, gt):

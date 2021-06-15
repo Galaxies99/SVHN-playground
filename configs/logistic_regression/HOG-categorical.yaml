@@ -1,7 +1,6 @@
 model:
   name: "LogisticRegression"
-  dim: 1024
-  num_classes: 10
+  dim: 8100
 
 dataset:
   path: "data"
@@ -9,9 +8,12 @@ dataset:
   shuffle: True
   num_workers: 32
   drop_last: False
-  gray_scale: False
-  hog_feature: False
+  gray_scale: True
+  hog_feature: True
   preprocess: False
+  block_size: 2
+  cell_size: 2
+  bin_size: 9
 
 optimizer:
   type: "AdamW"
@@ -20,9 +22,10 @@ optimizer:
     weight_decay: 0.00
 
 trainer:
+  num_classes: 10
   max_epoch: 50
   extra: False
 
 stats:
   stats_dir: "stats"
-  stats_folder: "logistic_regression/gray/"
+  stats_folder: "logistic_regression/HOG/"

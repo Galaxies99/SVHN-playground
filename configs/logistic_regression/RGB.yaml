@@ -2,7 +2,6 @@ model:
   name: "LogisticRegression"
   dim: 3072
   num_classes: 10
-  loss_type: "default"
 
 dataset:
   path: "data"
@@ -18,6 +17,7 @@ optimizer:
   type: "AdamW"
   params:
     lr: 0.001
+    weight_decay: 0.00
 
 trainer:
   max_epoch: 50
@@ -25,4 +25,4 @@ trainer:
 
 stats:
   stats_dir: "stats"
-  stats_folder: "logisitc_regression/RGB/"
+  stats_folder: "logistic_regression/RGB/"

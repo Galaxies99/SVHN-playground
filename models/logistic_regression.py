@@ -21,6 +21,7 @@ class LogisticRegression(nn.Module):
     
     def loss(self, pred, gt):
         return (- pred * gt + torch.log(1.0 + torch.exp(pred))).mean()
+        # return F.binary_cross_entropy_with_logits(pred, gt.float())
 
 class CategoricalLogisticRegression(Binary2Categorical):
     def __init__(self, **kwargs):

@@ -43,7 +43,7 @@ class HOG_Feature_Descriptor(object):
     @staticmethod
     def L2_normalization(cells, eps = 1e-6):
         res = cells.flatten().astype(np.float32)
-        norm = np.linalg.norm(res) + eps
+        norm = np.sqrt(np.sum(res ** 2) + eps)
         return res / norm
         
     
@@ -74,8 +74,8 @@ class HOG_Feature_Descriptor(object):
         cells = np.zeros((self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
         for i in range(self.cell_H):
             for j in range(self.cell_W):
-                begin_h = i * self.cell_H
-                begin_w = j * self.cell_W
+                begin_h = i * self.pixels_per_cell[0]
+                begin_w = j * self.pixels_per_cell[1]
                 cells[i, j, :] = self.calc_hist(
                     magnitudes[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
                     angles[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
@@ -113,8 +113,8 @@ class HOG_Feature_Descriptor(object):
         cells = np.zeros((self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
         for i in range(self.cell_H):
             for j in range(self.cell_W):
-                begin_h = i * self.cell_H
-                begin_w = j * self.cell_W
+                begin_h = i * self.pixels_per_cell[0]
+                begin_w = j * self.pixels_per_cell[1]
                 cells[i, j, :] = self.calc_hist(
                     magnitudes[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
                     angles[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
@@ -157,8 +157,8 @@ class HOG_Feature_Descriptor(object):
         for b in range(B):
             for i in range(self.cell_H):
                 for j in range(self.cell_W):
-                    begin_h = i * self.cell_H
-                    begin_w = j * self.cell_W
+                    begin_h = i * self.pixels_per_cell[0]
+                    begin_w = j * self.pixels_per_cell[1]
                     cells[b, i, j, :] = self.calc_hist(
                         magnitudes[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
                         angles[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
@@ -197,8 +197,8 @@ class HOG_Feature_Descriptor(object):
         for b in range(B):
             for i in range(self.cell_H):
                 for j in range(self.cell_W):
-                    begin_h = i * self.cell_H
-                    begin_w = j * self.cell_W
+                    begin_h = i * self.pixels_per_cell[0]
+                    begin_w = j * self.pixels_per_cell[1]
                     cells[b, i, j, :] = self.calc_hist(
                         magnitudes[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
                         angles[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],

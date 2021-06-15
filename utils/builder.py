@@ -8,6 +8,16 @@ def model_builder(model_params):
     return model
 
 
+def categorical_model_builder(model_params):
+    from models.logistic_regression import LogisticRegression
+    model_name = model_params['name']
+    if model_name == 'LogisticRegression':
+        model = LogisticRegression(**model_params)
+    else:
+        raise NotImplementedError('Invalid model name.')
+    return model  
+
+
 def dataloader_builder(dataset_params, split = 'train'):
     from .dataset import SVHN_Dataset
     from torch.utils.data import DataLoader

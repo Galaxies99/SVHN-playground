@@ -79,7 +79,7 @@ def train_one_epoch(epoch, extra = False):
             loss = model.loss(res, labels.view(-1))
             loss.backward()
             optimizer.step()
-            res_final = torch.argmax(torch.cat(res, dim = 1), dim = 1)
+            res_final = torch.argmax(res, dim = 1)
             cnt_all += len(labels)
             cur_acc = 0
             for i, label_sample in enumerate(labels):

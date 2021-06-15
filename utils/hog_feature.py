@@ -1,57 +1,214 @@
-# Ref: https://www.cnblogs.com/Jack-Elvis/p/11285290.html
 import cv2
 import numpy as np
 
 
-def L2Norm(cells):
-    block = cells.flatten().astype(np.float32)
-    norm_factor = np.sqrt(np.sum(block**2) + 1e-6)
-    block /= norm_factor
-    return block
+class HOG_Feature_Descriptor(object):
+    def __init__(self, image_size = (32, 32), pixels_per_cell = (2, 2), cells_per_block = (2, 2), bin_size = 9, eps = 1e-6, debug = False):
+        super(HOG_Feature_Descriptor, self).__init__()
+        self.image_size = image_size
+        self.pixels_per_cell = pixels_per_cell
+        self.cells_per_block = cells_per_block
+        self.bin_size = bin_size
+        self.debug = debug
+        assert 180 % self.bin_size == 0
+        assert image_size[0] % pixels_per_cell[0] == 0 and image_size[1] % pixels_per_cell[1] == 0
+        self.cell_H = image_size[0] // pixels_per_cell[0]
+        self.cell_W = image_size[1] // pixels_per_cell[1]
+        self.block_H = self.cell_H - cells_per_block[0] + 1
+        self.block_W = self.cell_W - cells_per_block[1] + 1
+        self.eps = eps
 
 
-def calc_hist(mag, angle, bin_size=9):
-    hist = np.zeros((bin_size, ), dtype=np.int32)
-    bin_step = 180 // bin_size
-    bins = (angle // bin_step).flatten()
-    flat_mag = mag.flatten()
-    for i, m in zip(bins, flat_mag):
-        hist[i] += m
-    return hist
+    @staticmethod
+    def calc_hist(maginitudes, angles, bin_size):
+        mags = maginitudes.flatten()
+        angs = angles.flatten()
+        bin_step = 180 // bin_size
+        res = np.zeros(bin_size, dtype = np.float)
+        for mag, ang in zip(mags, angs):
+            ang_left = int(ang // bin_step)
+            ang_right = ang_left + 1
+            mag_left = mag * (ang_right * bin_step - ang) / bin_step
+            mag_right = mag * (ang - ang_left * bin_step) / bin_step
+            if ang_left == bin_size:
+                ang_left = 0
+                ang_right = 1
+            if ang_right == bin_size:
+                ang_right = 0
+            res[ang_left] += mag_left
+            res[ang_right] += mag_right
+        return res
+    
+
+    @staticmethod
+    def L2_normalization(cells, eps = 1e-6):
+        res = cells.flatten().astype(np.float32)
+        norm = np.linalg.norm(res) + eps
+        return res / norm
+        
+    
+    def RGB_extractor(self, img):
+        '''
+        Single RGB Image Extractor: RGB -> HOG
+        Input RGB should be in the shape of H * W * C, where C = 3, and H, W is specified in image_size.
+        '''
+        H, W, C = img.shape
+        if H != self.image_size[0] or W != self.image_size[1] or C != 3:
+            raise AttributeError('The size of the image mismatches with the given shape.')
+
+        img_rightshifted = np.concatenate((img[:, 1:, :], np.zeros((H, 1, C))), axis = 1)
+        img_leftshifted = np.concatenate((np.zeros((H, 1, C)), img[:, 0: W - 1, :]), axis = 1)
+        horizontal_grad = img_rightshifted - img_leftshifted
+        
+        img_downshifted = np.concatenate((img[1:, :, :], np.zeros((1, W, C))), axis = 0)
+        img_upshifted = np.concatenate((np.zeros((1, W, C)), img[0: H - 1, :, :]), axis = 0)
+        vertical_grad = img_downshifted - img_upshifted
+        
+        magnitudes = horizontal_grad ** 2 + vertical_grad ** 2
+        angles = np.arctan(horizontal_grad / (vertical_grad + self.eps)) * 180 / np.pi + 90
+        zipped_array = np.stack((magnitudes, angles), axis = -1)
+        zipped_array = np.max(zipped_array, axis = 2)
+        magnitudes = np.sqrt(zipped_array[:, :, 0])
+        angles = zipped_array[:, :, 1]
+
+        cells = np.zeros((self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
+        for i in range(self.cell_H):
+            for j in range(self.cell_W):
+                begin_h = i * self.cell_H
+                begin_w = j * self.cell_W
+                cells[i, j, :] = self.calc_hist(
+                    magnitudes[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                    angles[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                    self.bin_size
+                )
+        
+        features = np.zeros((self.block_H, self.block_W, self.cells_per_block[0] * self.cells_per_block[1] * self.bin_size))
+        for i in range(self.block_H):
+            for j in range(self.block_W):
+                features[i, j, :] = self.L2_normalization(cells[i: i + self.cells_per_block[0], j: j + self.cells_per_block[1], :])
+        
+        return features.flatten()
 
 
-def calc_hog(gray, block_size = 2, cell_size = 2, bin_size = 9, eps = 1e-3):
-    dx = cv2.Sobel(gray, cv2.CV_16S, 1, 0)
-    dy = cv2.Sobel(gray, cv2.CV_16S, 0, 1)
-    angle = np.int32(np.arctan(dy / (dx + eps)) * 180 / np.pi) + 90
-    dx = cv2.convertScaleAbs(dx)
-    dy = cv2.convertScaleAbs(dy)
-    mag = cv2.addWeighted(dx, 0.5, dy, 0.5, 0)
+    def gray_extractor(self, img):
+        '''
+        Single Gray Image Extractor: Gray -> HOG
+        Input Gray should be in the shape of H * W, where H, W is specified in image_size.
+        '''
+        H, W = img.shape
+        if H != self.image_size[0] or W != self.image_size[1]:
+            raise AttributeError('The size of the image mismatches with the given shape.')
 
-    img_h, img_w = gray.shape[:2]
-    cell_h, cell_w = (img_h // cell_size, img_w // cell_size)
+        img_rightshifted = np.concatenate((img[:, 1:], np.zeros((H, 1))), axis = 1)
+        img_leftshifted = np.concatenate((np.zeros((H, 1)), img[:, 0: W - 1]), axis = 1)
+        horizontal_grad = img_rightshifted - img_leftshifted
+        
+        img_downshifted = np.concatenate((img[1:, :], np.zeros((1, W))), axis = 0)
+        img_upshifted = np.concatenate((np.zeros((1, W)), img[0: H - 1]), axis = 0)
+        vertical_grad = img_downshifted - img_upshifted
+        
+        magnitudes = np.sqrt(horizontal_grad ** 2 + vertical_grad ** 2)
+        angles = np.arctan(horizontal_grad / (vertical_grad + self.eps)) * 180 / np.pi + 90
 
-    cells = np.zeros((cell_h, cell_w, bin_size), dtype = np.int32)
-    for i in range(cell_h):
-        cell_row = cell_size * i
-        for j in range(cell_w):
-            cell_col = cell_size * j
-            cells[i, j] = calc_hist(
-                mag[cell_row : cell_row + cell_size, cell_col : cell_col + cell_size], 
-                angle[cell_row : cell_row + cell_size, cell_col : cell_col + cell_size], 
-                bin_size
-            )
+        cells = np.zeros((self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
+        for i in range(self.cell_H):
+            for j in range(self.cell_W):
+                begin_h = i * self.cell_H
+                begin_w = j * self.cell_W
+                cells[i, j, :] = self.calc_hist(
+                    magnitudes[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                    angles[begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                    self.bin_size
+                )
+        
+        features = np.zeros((self.block_H, self.block_W, self.cells_per_block[0] * self.cells_per_block[1] * self.bin_size))
+        for i in range(self.block_H):
+            for j in range(self.block_W):
+                features[i, j, :] = self.L2_normalization(cells[i: i + self.cells_per_block[0], j: j + self.cells_per_block[1], :])
+        
+        return features.flatten()
+    
 
-    block_h, block_w = (cell_h - block_size + 1, cell_w - block_size + 1)
-    blocks = np.zeros((block_h, block_w, block_size * block_size * bin_size), dtype = np.float32)
-    for i in range(block_h):
-        for j in range(block_w):
-            blocks[i, j] = L2Norm(cells[i : i + block_size, j : j + block_size])
+    def batch_RGB_extractor(self, img):
+        '''
+        Batch RGB Image Extractor: RGB -> HOG
+        Input RGB should be in the shape of B * H * W * C, where C = 3, and H, W is specified in image_size.
+        '''
+        B, H, W, C = img.shape
+        if H != self.image_size[0] or W != self.image_size[1] or C != 3:
+            raise AttributeError('The size of the image mismatches with the given shape.')
 
-    return blocks.flatten()
+        img_rightshifted = np.concatenate((img[:, :, 1:, :], np.zeros((B, H, 1, C))), axis = 2)
+        img_leftshifted = np.concatenate((np.zeros((B, H, 1, C)), img[:, :, 0: W - 1, :]), axis = 2)
+        horizontal_grad = img_rightshifted - img_leftshifted
+        
+        img_downshifted = np.concatenate((img[:, 1:, :, :], np.zeros((B, 1, W, C))), axis = 1)
+        img_upshifted = np.concatenate((np.zeros((B, 1, W, C)), img[:, 0: H - 1, :, :]), axis = 1)
+        vertical_grad = img_downshifted - img_upshifted
+        
+        magnitudes = horizontal_grad ** 2 + vertical_grad ** 2
+        angles = np.arctan(horizontal_grad / (vertical_grad + self.eps)) * 180 / np.pi + 90
+        zipped_array = np.stack((magnitudes, angles), axis = -1)
+        zipped_array = np.max(zipped_array, axis = 3)
+        magnitudes = np.sqrt(zipped_array[:, :, :, 0])
+        angles = zipped_array[:, :, :, 1]
 
-def calc_hog_feature_size(img_size = 32, block_size = 2, cell_size = 2, bin_size = 9):
-    assert img_size % cell_size == 0 and 360 % bin_size == 0
-    block_feature = cell_size * cell_size * bin_size
-    block_num = (img_size / cell_size - block_size + 1) ** 2
-    return block_num * block_feature
+        cells = np.zeros((B, self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
+        for b in range(B):
+            for i in range(self.cell_H):
+                for j in range(self.cell_W):
+                    begin_h = i * self.cell_H
+                    begin_w = j * self.cell_W
+                    cells[b, i, j, :] = self.calc_hist(
+                        magnitudes[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                        angles[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                        self.bin_size
+                    )
+        
+        features = np.zeros((B, self.block_H, self.block_W, self.cells_per_block[0] * self.cells_per_block[1] * self.bin_size))
+        for b in range(B):
+            for i in range(self.block_H):
+                for j in range(self.block_W):
+                    features[b, i, j, :] = self.L2_normalization(cells[b, i: i + self.cells_per_block[0], j: j + self.cells_per_block[1], :])
+            
+        return features.reshape(B, -1)
+    
+    def batch_gray_extractor(self, img):
+        '''
+        Batch Gray Image Extractor: Gray -> HOG
+        Input Gray should be in the shape of B * H * W, where H, W is specified in image_size.
+        '''
+        B, H, W = img.shape
+        if H != self.image_size[0] or W != self.image_size[1]:
+            raise AttributeError('The size of the image mismatches with the given shape.')
+
+        img_rightshifted = np.concatenate((img[:, :, 1:], np.zeros((B, H, 1))), axis = 2)
+        img_leftshifted = np.concatenate((np.zeros((B, H, 1)), img[:, :, 0: W - 1]), axis = 2)
+        horizontal_grad = img_rightshifted - img_leftshifted
+        
+        img_downshifted = np.concatenate((img[:, 1:, :], np.zeros((B, 1, W))), axis = 1)
+        img_upshifted = np.concatenate((np.zeros((B, 1, W)), img[:, 0: H - 1, :]), axis = 1)
+        vertical_grad = img_downshifted - img_upshifted
+        
+        magnitudes = np.sqrt(horizontal_grad ** 2 + vertical_grad ** 2)
+        angles = np.arctan(horizontal_grad / (vertical_grad + self.eps)) * 180 / np.pi + 90
+
+        cells = np.zeros((B, self.cell_H, self.cell_W, self.bin_size), dtype = np.float)
+        for b in range(B):
+            for i in range(self.cell_H):
+                for j in range(self.cell_W):
+                    begin_h = i * self.cell_H
+                    begin_w = j * self.cell_W
+                    cells[b, i, j, :] = self.calc_hist(
+                        magnitudes[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                        angles[b, begin_h: begin_h + self.pixels_per_cell[0], begin_w: begin_w + self.pixels_per_cell[1]],
+                        self.bin_size
+                    )
+        
+        features = np.zeros((B, self.block_H, self.block_W, self.cells_per_block[0] * self.cells_per_block[1] * self.bin_size))
+        for b in range(B):
+            for i in range(self.block_H):
+                for j in range(self.block_W):
+                    features[b, i, j, :] = self.L2_normalization(cells[b, i: i + self.cells_per_block[0], j: j + self.cells_per_block[1], :])
+            
+        return features.reshape(B, -1)

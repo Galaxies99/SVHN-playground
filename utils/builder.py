@@ -9,15 +9,14 @@ def model_builder(model_params):
 
 
 def dataloader_builder(dataset_params, split = 'train'):
-    from .dataset import get_dataset
+    from .dataset import SVHN_Dataset
     from torch.utils.data import DataLoader
     if split not in ['train', 'test', 'extra']:
         raise NotImplementedError('Invalid split name.')
-    dataset = get_dataset(
+    dataset = SVHN_Dataset(
         dataset_params.get('path', 'data'), 
         split = split, 
-        gray_scale = dataset_params.get('gray_scale', False),
-        hog_feature = dataset_params.get('hog_feature', False)
+        **dataset_params,
     )
     return DataLoader(
         dataset,
@@ -78,23 +77,17 @@ def lr_scheduler_builder(optimizer, lr_scheduler_params):
 
 def vae_builder(model_params):
     from models.VAE.VAE import VAE
-    from models.VAE.CVAE import CVAE
     from models.VAE.BetaVAE import BetaVAE
     from models.VAE.DisentangledBetaVAE import DisentangledBetaVAE
-    from models.VAE.BetaTCVAE import BetaTCVAE
     from models.VAE.DFCVAE import DFCVAE
     from models.VAE.MSSIMVAE import MSSIMVAE
     model_name = model_params['name']
     if model_name == 'VAE':
         model = VAE(**model_params)
-    elif model_name == 'CVAE':
-        model = CVAE(**model_params)
     elif model_name == 'BetaVAE':
         model = BetaVAE(**model_params)
     elif model_name == 'DisentangledBetaVAE':
         model = DisentangledBetaVAE(**model_params)
-    elif model_name == 'BetaTCVAE':
-        model = BetaTCVAE(**model_params)
     elif model_name == 'DFCVAE':
         model = DFCVAE(**model_params)
     elif model_name == 'MSSIMVAE':

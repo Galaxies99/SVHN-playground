@@ -12,6 +12,7 @@ dataset:
   drop_last: False
   gray_scale: True
   hog_feature: True
+  preprocess: False
   block_size: 2
   cell_size: 2
   bin_size: 9
@@ -22,7 +23,7 @@ optimizer:
     lr: 0.001
 
 trainer:
-  max_epoch: 20
+  max_epoch: 50
   extra: False
 
 stats:

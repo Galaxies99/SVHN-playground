@@ -12,6 +12,7 @@ dataset:
   drop_last: False
   gray_scale: False
   hog_feature: False
+  preprocess: False
 
 optimizer:
   type: "AdamW"
@@ -19,7 +20,7 @@ optimizer:
     lr: 0.001
 
 trainer:
-  max_epoch: 20
+  max_epoch: 50
   extra: False
 
 stats:

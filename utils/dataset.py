@@ -8,7 +8,7 @@ from .hog_feature import calc_hog
 
 
 class SVHN_Dataset(Dataset):
-    def __init__(self, data_root, split = 'train', gray_scale = False, hog_feature = False):
+    def __init__(self, data_root, split = 'train', gray_scale = False, hog_feature = False, **kwargs):
         super(SVHN_Dataset, self).__init__()
         if split not in ['train', 'test', 'extra']:
             raise AttributeError('Invalid "split" attribute, "split" can only be "train", "test", or "extra".')
@@ -19,6 +19,9 @@ class SVHN_Dataset(Dataset):
         self.labels = data['y']
         self.gray_scale = gray_scale
         self.hog_feature = hog_feature
+        self.block_size = kwargs.get('block_size', 2)
+        self.cell_size = kwargs.get('cell_size', 2)
+        self.bin_size = kwargs.get('bin_size', 9)
     
     def _transform(self, image):
         return image / 255.0 * 2 - 1
@@ -32,13 +35,14 @@ class SVHN_Dataset(Dataset):
         if self.gray_scale:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             if self.hog_feature:
-                image = calc_hog(image, block_size = 2, cell_size = 2, bin_size = 9)
+                image = calc_hog(image, block_size = self.block_size, cell_size = self.cell_size, bin_size = self.bin_size)
             else:
                 image = image[np.newaxis, :, :]
         else:
             image = image.transpose(2, 0, 1)
         if not self.hog_feature:
             image = self._transform(image)
+        label = np.where(label == 10, 0, label)
         return torch.FloatTensor(image), torch.LongTensor(label)
 
 

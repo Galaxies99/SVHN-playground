@@ -64,7 +64,8 @@ if os.path.isfile(checkpoint_file):
     checkpoint = torch.load(checkpoint_file)
     model.load_state_dict(checkpoint['model_state_dict'])
     start_epoch = checkpoint['epoch']
-    lr_scheduler.last_epoch = start_epoch - 1
+    if lr_scheduler is not None:
+        lr_scheduler.last_epoch = start_epoch - 1
     logger.info("Checkpoint {} (epoch {}) loaded.".format(checkpoint_file, start_epoch))
 elif MODE == "inference":
     raise AttributeError('There should be a checkpoint file for inference.')
@@ -178,12 +179,13 @@ def train(start_epoch):
     global cur_epoch
     for epoch in range(start_epoch, max_epoch):
         cur_epoch = epoch
-        logger.info('--> Epoch {}/{}, learning rate: {}'.format(epoch + 1, max_epoch, lr_scheduler.get_last_lr()[0]))
+        logger.info('--> Epoch {}/{}'.format(epoch + 1, max_epoch))
         train_one_epoch(epoch)
         if trainer_params.get('extra', False):
             train_one_epoch(epoch, extra = True)
         loss = test_one_epoch(epoch)
-        lr_scheduler.step()
+        if lr_scheduler is not None:
+            lr_scheduler.step()
         save_dict = {
             'epoch': epoch + 1, 
             'model_state_dict': model.state_dict(),

@@ -5,7 +5,7 @@ import argparse
 import logging
 from tqdm import tqdm
 from utils.logger import ColoredLogger
-from utils.builder import optimizer_builder, dataloader_builder, model_builder
+from utils.builder import optimizer_builder, dataloader_builder, model_builder, lr_scheduler_builder
 import argparse
 
 
@@ -25,6 +25,7 @@ with open(CFG_FILE, 'r') as cfg_file:
 model_params = cfg_dict.get('model', {})
 dataset_params = cfg_dict.get('dataset', {})
 optimizer_params = cfg_dict.get('optimizer', {})
+lr_scheduler_params = cfg_dict.get('lr_scheduler', {})
 trainer_params = cfg_dict.get('trainer', {})
 stats_params = cfg_dict.get('stats', {})
 
@@ -40,6 +41,7 @@ extra_dataloader = dataloader_builder(dataset_params, split = 'extra')
 
 logger.info('Building optimizer ...')
 optimizer = optimizer_builder(model, optimizer_params)
+lr_scheduler = lr_scheduler_builder(optimizer, lr_scheduler_params)
 
 logger.info('Checking checkpoints ...')
 start_epoch = 0
@@ -52,6 +54,8 @@ if os.path.isfile(checkpoint_file):
     checkpoint = torch.load(checkpoint_file)
     model.load_state_dict(checkpoint['model_state_dict'])
     start_epoch = checkpoint['epoch']
+    if lr_scheduler is not None:
+        lr_scheduler.last_epoch = start_epoch - 1
     logger.info("Checkpoint {} (epoch {}) loaded.".format(checkpoint_file, start_epoch))
 
 
@@ -122,10 +126,12 @@ def train(start_epoch):
         if trainer_params.get('extra', False):
             train_one_epoch(epoch, extra = True)
         _, acc = test_one_epoch(epoch)
+        if lr_scheduler is not None:
+            lr_scheduler.step()
         if acc > max_acc:
             max_acc = acc
             save_dict = {
-                 'epoch': epoch + 1,
+                'epoch': epoch + 1,
                 'model_state_dict': model.state_dict(),
             }
             torch.save(save_dict, os.path.join(stats_dir, 'checkpoint.tar'))

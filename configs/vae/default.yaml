@@ -10,7 +10,7 @@ dataset:
   batch_size: 64
   shuffle: True
   num_workers: 4
-  drop_last: False
+  drop_last: True
   gray_scale: False
   hog_feature: False
 

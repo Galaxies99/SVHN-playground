@@ -4,6 +4,7 @@ data/
 mytest.py
 .DS_Store
 */.DS_Store
+stats/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -55,7 +55,7 @@ def optimizer_builder(model, optimizer_params):
 
 def lr_scheduler_builder(optimizer, lr_scheduler_params):
     from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR, CyclicLR, CosineAnnealingLR, LambdaLR, StepLR
-    type = lr_scheduler_params.get('type', 'ExponentialLR')
+    type = lr_scheduler_params.get('type', '')
     params = lr_scheduler_params.get('params', {})
     if type == 'MultiStepLR':
         scheduler = MultiStepLR(optimizer, **params)
@@ -69,7 +69,7 @@ def lr_scheduler_builder(optimizer, lr_scheduler_params):
         scheduler = LambdaLR(optimizer, **params)
     elif type == 'StepLR':
         scheduler = StepLR(optimizer, **params)
-    elif type == 'None':
+    elif type == '':
         scheduler = None
     else:
         raise NotImplementedError('Invalid learning rate scheduler type.')

@@ -42,7 +42,6 @@ def calc_hog(gray, block_size = 2, cell_size = 2, bin_size = 9, eps = 1e-3):
                 bin_size
             )
 
-    block_size = 2
     block_h, block_w = (cell_h - block_size + 1, cell_w - block_size + 1)
     blocks = np.zeros((block_h, block_w, block_size * block_size * bin_size), dtype = np.float32)
     for i in range(block_h):
@@ -50,7 +49,6 @@ def calc_hog(gray, block_size = 2, cell_size = 2, bin_size = 9, eps = 1e-3):
             blocks[i, j] = L2Norm(cells[i : i + block_size, j : j + block_size])
 
     return blocks.flatten()
-
 
 def calc_hog_feature_size(img_size = 32, block_size = 2, cell_size = 2, bin_size = 9):
     assert img_size % cell_size == 0 and 360 % bin_size == 0

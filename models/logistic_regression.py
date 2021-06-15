@@ -19,9 +19,12 @@ class LogisticRegression(nn.Module):
             x = rearrange(x, 'b c h w -> b (c h w)')
         return torch.sigmoid(self.final(x).view(-1))
     
-    def loss(self, pred, gt):
-        return (- pred * gt + torch.log(1.0 + torch.exp(pred))).mean()
-        # return F.binary_cross_entropy_with_logits(pred, gt.float())
+    def loss(self, pred, gt, balance = 1.0):
+        negative_log_likelihood = - pred * gt + torch.log(1.0 + torch.exp(pred))
+        positive_samples_nll = torch.where(gt == 1, negative_log_likelihood, torch.scalar_tensor(0.0, dtype = torch.float32).to(pred.device)).to(pred.device)
+        total_samples = len(negative_log_likelihood) + len(positive_samples_nll) * (balance - 1.0)
+        return (positive_samples_nll.sum() * (balance - 1.0) + negative_log_likelihood.sum()) / total_samples
+       
 
 class CategoricalLogisticRegression(Binary2Categorical):
     def __init__(self, **kwargs):

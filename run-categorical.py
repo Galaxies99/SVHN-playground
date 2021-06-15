@@ -90,14 +90,15 @@ def train_one_epoch(epoch, extra = False):
             for idx in range(num_classes):
                 optimizers[idx].zero_grad()
                 labels_idx = torch.where(labels == idx, 1, 0).to(device)
-                res = models[idx](x)
-                categorical_res.append(res.view(-1, 1))
-                loss = models[idx].loss(res, labels_idx.view(-1))
-                categorical_losses.append(loss)
-                loss.backward()
+                res_idx = models[idx](x)
+                categorical_res.append(res_idx.view(-1, 1))
+                loss_idx = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes)
+                categorical_losses.append(loss_idx)
+                loss_idx.backward()
                 optimizers[idx].step()
             loss = torch.stack(categorical_losses, dim = 0).mean()
-            res_final = torch.argmax(torch.cat(categorical_res, dim = 1), dim = 1)
+            res = torch.cat(categorical_res, dim = 1)
+            res_final = torch.argmax(res, dim = 1)
             cnt_all += len(labels)
             cur_acc = 0
             for i, label_sample in enumerate(labels):
@@ -127,13 +128,14 @@ def test_one_epoch(epoch):
             categorical_res = []
             for idx in range(num_classes):
                 with torch.no_grad():
-                    res = models[idx](x)
-                    categorical_res.append(res.view(-1, 1))
+                    res_idx = models[idx](x)
+                    categorical_res.append(res_idx.view(-1, 1))
                     labels_idx = torch.where(labels == idx, 1, 0).to(device)
-                    loss = models[idx].loss(res, labels_idx.view(-1))
+                    loss = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes)
                     categorical_losses.append(loss)
             loss = torch.stack(categorical_losses, dim = 0).mean()
-            res_final = torch.argmax(torch.cat(categorical_res, dim = 1), dim = 1)
+            res = torch.cat(categorical_res, dim = 1)
+            res_final = torch.argmax(res, dim = 1)
             cnt_all += len(labels)
             cur_acc = 0
             for i, label_sample in enumerate(labels):

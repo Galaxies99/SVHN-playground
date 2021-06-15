@@ -18,7 +18,7 @@ dataset:
 optimizer:
   type: "AdamW"
   params:
-    lr: 0.001
+    lr: 0.01
     weight_decay: 0.00
 
 trainer:
@@ -28,4 +28,4 @@ trainer:
 
 stats:
   stats_dir: "stats"
-  stats_folder: "logistic_regression/HOG/"
+  stats_folder: "logistic_regression/grayHOG-0.01/"

@@ -123,7 +123,8 @@ def test_one_epoch(epoch):
 
 
 def train(start_epoch):
-    _, max_acc = test_one_epoch(-1)
+    _, max_acc = test_one_epoch(start_epoch - 1)
+    max_acc_epoch = 0
     for epoch in range(start_epoch, max_epoch):
         logger.info('--> Epoch {}/{}'.format(epoch + 1, max_epoch))
         train_one_epoch(epoch)
@@ -134,11 +135,13 @@ def train(start_epoch):
             lr_scheduler.step()
         if acc > max_acc:
             max_acc = acc
+            max_acc_epoch = epoch + 1
             save_dict = {
                 'epoch': epoch + 1,
                 'model_state_dict': model.state_dict(),
             }
             torch.save(save_dict, os.path.join(stats_dir, 'checkpoint.tar'))
+    logger.info('Training Finished. Max accuracy: {:.6f}, in epoch {}'.format(max_acc, max_acc_epoch))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,31 @@
+model:
+  name: "LogisticRegression"
+  dim: 8100
+
+dataset:
+  path: "data"
+  batch_size: 256
+  shuffle: True
+  num_workers: 32
+  drop_last: False
+  gray_scale: False
+  hog_feature: True
+  preprocess: False
+  block_size: 2
+  cell_size: 2
+  bin_size: 9
+
+optimizer:
+  type: "AdamW"
+  params:
+    lr: 0.001
+    weight_decay: 0.00
+
+trainer:
+  num_classes: 10
+  max_epoch: 50
+  extra: False
+
+stats:
+  stats_dir: "stats"
+  stats_folder: "logistic_regression/HOG-256/"

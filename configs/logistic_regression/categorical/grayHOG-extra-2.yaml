@@ -1,0 +1,31 @@
+model:
+  name: "LogisticRegression"
+  dim: 1764
+
+dataset:
+  path: "data"
+  batch_size: 128
+  shuffle: True
+  num_workers: 32
+  drop_last: False
+  gray_scale: True
+  hog_feature: True
+  preprocess: False
+  block_size: 2
+  cell_size: 4
+  bin_size: 9
+
+optimizer:
+  type: "AdamW"
+  params:
+    lr: 0.001
+    weight_decay: 0.00
+
+trainer:
+  num_classes: 10
+  max_epoch: 20
+  extra: True
+
+stats:
+  stats_dir: "stats"
+  stats_folder: "logistic_regression/grayHOG-extra-2/"

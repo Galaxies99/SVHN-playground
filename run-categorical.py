@@ -6,6 +6,7 @@ import logging
 from tqdm import tqdm
 from utils.logger import ColoredLogger
 from utils.builder import optimizer_builder, dataloader_builder, categorical_model_builder, lr_scheduler_builder
+from utils.dataset import get_dataset_size
 import argparse
 
 
@@ -68,6 +69,9 @@ if os.path.isfile(checkpoint_file):
             lr_schedulers[i].last_epoch = start_epoch - 1
     logger.info("Checkpoint {} (epoch {}) loaded.".format(checkpoint_file, start_epoch))
 
+total_train_samples = get_dataset_size(dataset_params.get('path', 'data'), 'train') * (2 - 1 / num_classes)
+total_test_samples = get_dataset_size(dataset_params.get('path', 'data'), 'test') * (2 - 1 / num_classes)
+total_extra_samples = get_dataset_size(dataset_params.get('path', 'data'), 'extra') * (2 - 1 / num_classes)
 
 def train_one_epoch(epoch, extra = False):
     logger.info('Start training process in epoch {}.'.format(epoch + 1))
@@ -76,8 +80,10 @@ def train_one_epoch(epoch, extra = False):
     losses = []
     if extra:
         dataloader = extra_dataloader
+        all_samples = total_extra_samples
     else:
         dataloader = train_dataloader
+        all_samples = total_train_samples
     acc = 0
     cnt_all = 0
     with tqdm(dataloader) as pbar:
@@ -92,7 +98,7 @@ def train_one_epoch(epoch, extra = False):
                 labels_idx = torch.where(labels == idx, 1, 0).to(device)
                 res_idx = models[idx](x)
                 categorical_res.append(res_idx.view(-1, 1))
-                loss_idx = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes)
+                loss_idx = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes, all_samples = all_samples)
                 categorical_losses.append(loss_idx)
                 loss_idx.backward()
                 optimizers[idx].step()
@@ -116,6 +122,7 @@ def test_one_epoch(epoch):
     logger.info('Start testing process in epoch {}.'.format(epoch + 1))
     for idx in range(num_classes):
         models[idx].eval()
+    all_samples = total_test_samples
     losses = []
     acc = 0
     cnt_all = 0
@@ -131,7 +138,7 @@ def test_one_epoch(epoch):
                     res_idx = models[idx](x)
                     categorical_res.append(res_idx.view(-1, 1))
                     labels_idx = torch.where(labels == idx, 1, 0).to(device)
-                    loss = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes)
+                    loss = models[idx].loss(res_idx, labels_idx.view(-1), balance = num_classes, all_samples = all_samples)
                     categorical_losses.append(loss)
             loss = torch.stack(categorical_losses, dim = 0).mean()
             res = torch.cat(categorical_res, dim = 1)

@@ -5,6 +5,12 @@ import numpy as np
 from scipy import io
 from torch.utils.data import Dataset
 from .hog_feature import HOG_Feature_Descriptor
+import logging
+from .logger import ColoredLogger
+
+
+logging.setLoggerClass(ColoredLogger)
+logger = logging.getLogger(__name__)
 
 
 class SVHN_Dataset(Dataset):
@@ -13,6 +19,7 @@ class SVHN_Dataset(Dataset):
         if split not in ['train', 'test', 'extra']:
             raise AttributeError('Invalid "split" attribute, "split" can only be "train", "test", or "extra".')
         self.preprocess = preprocess
+
         data = io.loadmat(os.path.join(data_root, split + "_32x32.mat"))
         self.images = data['X'].transpose(3, 0, 1, 2)
         self.images = self.images[:, :, :, ::-1] 
@@ -28,6 +35,15 @@ class SVHN_Dataset(Dataset):
                 cells_per_block = (self.block_size, self.block_size),
                 bin_size = self.bin_size
             )
+        if self.hog_feature and self.gray_scale:
+            prepared_feature_file = os.path.join(data_root, 'feature_{}_{}_{}_{}.npy'.format(split, self.block_size, self.cell_size, self.bin_size))
+            prepared_label_file = os.path.join(data_root, 'label_{}_{}_{}_{}.npy'.format(split, self.block_size, self.cell_size, self.bin_size))
+            if os.path.exists(prepared_feature_file) and os.path.exists(prepared_label_file):
+                logger.info('Use existing features.')
+                self.images = np.load(prepared_feature_file)
+                self.labels = np.load(prepared_label_file)
+                self.preprocess = True
+                return 
         if self.preprocess:
             if self.gray_scale:
                 self.images = self._rgb2gray_batch(self.images)
@@ -77,3 +93,11 @@ class SVHN_Dataset(Dataset):
 
 def get_dataset_size(data_root = 'data', split = 'train'):
     return len(SVHN_Dataset(data_root, split))
+
+
+def generate_feature(path = 'data', split = 'train', gray_scale = True, block_size = 2, cell_size = 2, bin_size = 9):
+    d = SVHN_Dataset(path, split, gray_scale, hog_feature = True, preprocess = True, block_size = block_size, cell_size = cell_size, bin_size = bin_size)
+    filename = os.path.join(path, 'feature_{}_{}_{}_{}.npy'.format(split, block_size, cell_size, bin_size))
+    label_filename = os.path.join(path, 'label_{}_{}_{}_{}.npy'.format(split, block_size, cell_size, bin_size))
+    np.save(filename, d.images)
+    np.save(label_filename, d.labels)

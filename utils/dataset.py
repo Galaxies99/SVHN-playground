@@ -54,6 +54,8 @@ class SVHN_Dataset(Dataset):
                     self.images = self.hog.batch_RGB_extractor(self.images)
             else:
                 self.images = self._transform(self.images)
+            if not self.gray_scale and not self.hog_feature:
+                self.images = self.images.transpose(0, 3, 1, 2)
         self.labels = data['y']
         self.labels = np.where(self.labels == 10, 0, self.labels)
         
@@ -88,6 +90,8 @@ class SVHN_Dataset(Dataset):
                     image = self.hog.RGB_extractor(image)
             else:
                 image = self._transform(image)
+            if not self.gray_scale and not self.hog_feature:
+                image = image.transpose(2, 0, 1)
         return torch.FloatTensor(image), torch.LongTensor(label)
 
 

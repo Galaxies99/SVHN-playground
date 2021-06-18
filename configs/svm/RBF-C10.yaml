@@ -1,0 +1,7 @@
+train_feature_path: 'data/feature_train_2_4_9.npy'
+train_label_path: 'data/label_train_2_4_9.npy'
+test_feature_path: 'data/feature_test_2_4_9.npy'
+test_label_path: 'data/label_test_2_4_9.npy'
+samples: 10000
+regularization: 10
+kernel: 'rbf'

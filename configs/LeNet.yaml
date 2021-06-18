@@ -1,0 +1,27 @@
+model:
+  name: "LeNet"
+  num_classes: 10
+  
+dataset:
+  path: "data"
+  batch_size: 128
+  shuffle: True
+  num_workers: 32
+  drop_last: False
+  gray_scale: False
+  hog_feature: False
+  preprocess: False
+
+optimizer:
+  type: "AdamW"
+  params:
+    lr: 0.001
+    weight_decay: 0.00
+
+trainer:
+  max_epoch: 50
+  extra: False
+
+stats:
+  stats_dir: "stats"
+  stats_folder: "LeNet/"

@@ -28,7 +28,7 @@ test_feature_path = cfg_dict.get('test_feature_path', os.path.join('data', 'hog-
 test_label_path = cfg_dict.get('test_label_path', os.path.join('data', 'labels.npy'))
 
 samples = cfg_dict.get('samples', 10000)
-C = cfg_dict.get('regularization', 100000)
+C = cfg_dict.get('regularization', 1)
 kernel = cfg_dict.get('kernel', 'linear')
 degree = cfg_dict.get('degree', 3)
 gamma = cfg_dict.get('gamma', 'scale')
@@ -48,4 +48,4 @@ test_images = np.load(test_feature_path)
 test_labels = np.load(test_label_path)
 test_labels = test_labels.reshape(-1)
 
-logger.info('Acc: {:.6f}', model.score(test_images, test_labels)[0])
+print('Acc:', model.score(test_images, test_labels))

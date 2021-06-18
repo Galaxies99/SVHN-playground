@@ -1,9 +1,48 @@
 def model_builder(model_params):
     from models.logistic_regression import CategoricalLogisticRegression
+    from models.LeNet import LeNet
+    from models.AlexNet import AlexNet
+    from models.VGG import vgg11, vgg11_bn, vgg13, vgg13_bn, vgg16, vgg16_bn, vgg19, vgg19_bn
+    from models.GoogLeNet import GoogLeNet
+    from models.ResNet import resnet, resnet18, resnet34, resnet50, resnet101, resnet152
     model_name = model_params['name']
     if model_name == 'LogisticRegression':
         model = CategoricalLogisticRegression(**model_params)
-    else:
+    elif model_name == 'LeNet':
+        model = LeNet(**model_params)
+    elif model_name == 'AlexNet':
+        model = AlexNet(**model_params)
+    elif model_name == 'VGG-11':
+        model = vgg11(**model_params)
+    elif model_name == 'VGG-11-bn':
+        model = vgg11_bn(**model_params)    
+    elif model_name == 'VGG-13':
+        model = vgg13(**model_params)
+    elif model_name == 'VGG-13-bn':
+        model = vgg13_bn(**model_params)   
+    elif model_name == 'VGG-16':
+        model = vgg16(**model_params)
+    elif model_name == 'VGG-16-bn':
+        model = vgg16_bn(**model_params)   
+    elif model_name == 'VGG-19':
+        model = vgg19(**model_params)
+    elif model_name == 'VGG-19-bn':
+        model = vgg19_bn(**model_params) 
+    elif model_name == 'GoogLeNet':
+        model = GoogLeNet(**model_params)
+    elif model_name == 'ResNet':
+        model = resnet(**model_params)
+    elif model_name == 'ResNet-18':
+        model = resnet18(**model_params)
+    elif model_name == 'ResNet-34':
+        model = resnet34(**model_params)
+    elif model_name == 'ResNet-50':
+        model = resnet50(**model_params)
+    elif model_name == 'ResNet-101':
+        model = resnet101(**model_params)
+    elif model_name == 'ResNet-152':
+        model = resnet152(**model_params)
+    else:  
         raise NotImplementedError('Invalid model name.')
     return model
 

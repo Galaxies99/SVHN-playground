@@ -69,7 +69,7 @@ python run-gradcam.py --cfg [Config File]
 - VGG Nets, including vgg11, vgg13, vgg16, vgg19, vgg11bn, vgg13bn, vgg16bn, vgg19bn;
 - GoogLeNet;
 - ResNets, including resnet18, resnet34, resnet50, resnet101, resnet152;
-- VAE;
+- Variational auto-encoders;
 - beta-VAE;
 - Disentangled beta-VAE;
 - MSSIM-VAE
@@ -104,4 +104,3 @@ python run-gradcam.py --cfg [Config File]
 14. Burgess, Christopher P., et al. "Understanding disentangling in $\beta $-VAE." arXiv preprint arXiv:1804.03599 (2018).
 15. Snell, Jake, et al. "Learning to generate images with perceptual similarity metrics." 2017 IEEE International Conference on Image Processing (ICIP). IEEE, 2017.
 16. Hou, Xianxu, et al. "Deep feature consistent variational autoencoder." 2017 IEEE Winter Conference on Applications of Computer Vision (WACV). IEEE, 2017.
-17. 

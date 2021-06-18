@@ -72,8 +72,12 @@ python run-gradcam.py --cfg [Config File]
 - Variational auto-encoders;
 - beta-VAE;
 - Disentangled beta-VAE;
-- MSSIM-VAE
+- MSSIM-VAE;
 - DFC-VAE.
+
+## Configuration Files
+
+All configuration files of the experiments are in the `configs` folder.
 
 ## Citation
 
